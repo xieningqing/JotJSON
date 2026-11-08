@@ -1,0 +1,30 @@
+# [阶段 1A 新增]
+# CMake 与构建产物
+/build/
+/out/
+
+# VS Code 用户级设置，不进入版本库
+.vscode/*.log
+.vscode/ipch/
+.vscode/.cmake/
+
+# 编译产物
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.exp
+
+# 测试与覆盖率
+*.gcda
+*.gcno
+*.profraw
+*.profdata
+
+# 系统文件
+.DS_Store
+Thumbs.db
