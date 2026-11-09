@@ -5,6 +5,7 @@
 #include <jotjson/parse.hpp>
 #include <jotjson/error.hpp>
 #include <jotjson/value.hpp>
+#include<jotjson/serialize.hpp>
 
 namespace jotjson{
     // 返回静态存储区中的库名，调用方不得释放

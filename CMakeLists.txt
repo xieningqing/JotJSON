@@ -38,6 +38,7 @@ add_library(jotjson STATIC
     src/version.cpp
     src/value.cpp
     src/parse.cpp
+    src/serialize.cpp
 )
 
 add_library(JotJSON::jotjson ALIAS jotjson)
@@ -60,6 +61,20 @@ if(JOTJSON_BUILD_EXAMPLES)
     add_executable(jotjson_example example/basic.cpp)
     target_link_libraries(jotjson_example PRIVATE JotJSON::jotjson)
     target_compile_options(jotjson_example PRIVATE ${JOTJSON_WARNING_OPTIONS})
+
+    # [阶段 2 新增]
+    # 直接展示紧凑序列化和美化序列化的实际输出。
+    add_executable(jotjson_serialize_example example/serialize.cpp)
+    target_link_libraries(
+        jotjson_serialize_example
+        PRIVATE
+            JotJSON::jotjson
+    )
+    target_compile_options(
+        jotjson_serialize_example
+        PRIVATE
+            ${JOTJSON_WARNING_OPTIONS}
+    )
 endif()
 
 if(JOTJSON_BUILD_CLI)

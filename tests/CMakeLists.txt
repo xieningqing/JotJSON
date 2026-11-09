@@ -3,12 +3,29 @@ add_executable(jotjson_tests
     test_main.cpp
 )
 
+# [阶段 2 新增]
+# 序列化测试与解析测试分开，失败时更容易定位。
+add_executable(jotjson_serialize_tests
+    test_serialize.cpp
+)
+
 target_link_libraries(jotjson_tests PRIVATE JotJSON::jotjson)
+target_link_libraries(
+    jotjson_serialize_tests
+    PRIVATE
+        JotJSON::jotjson
+)
 
 # 复用根 CMakeLists.txt 定义的警告选项，
 # 避免库和测试使用两套不一致的编译规则。
 target_compile_options(
     jotjson_tests
+    PRIVATE
+        ${JOTJSON_WARNING_OPTIONS}
+)
+
+target_compile_options(
+    jotjson_serialize_tests
     PRIVATE
         ${JOTJSON_WARNING_OPTIONS}
 )
@@ -19,9 +36,19 @@ add_test(
     COMMAND jotjson_tests
 )
 
+add_test(
+    NAME jotjson_serialize_tests
+    COMMAND jotjson_serialize_tests
+)
+
 set_tests_properties(jotjson_tests PROPERTIES
     LABELS "json;parser"
     # 让 ctest 展开测试程序的 PASS/FAIL 行，
     # 这样不必每次额外添加 -V。
+    VERBOSE 1
+)
+
+set_tests_properties(jotjson_serialize_tests PROPERTIES
+    LABELS "json;serializer"
     VERBOSE 1
 )
