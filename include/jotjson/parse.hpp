@@ -14,7 +14,10 @@ namespace jotjson{
 struct parse_options{
     std::size_t max_depth;
 
-    parse_options():max_depth(512){}
+    // 默认拒绝 utf-8 bom
+    bool allow_utf8_bom;
+
+    parse_options():max_depth(512),allow_utf8_bom(false){}
 };
 
 // 解析 JSON，并复制输入内容。

@@ -1,10 +1,90 @@
 #include<jotjson/value.hpp>
 
 #include<cerrno>
+#include<cmath>
 #include<stdexcept>
 #include<utility>
+#include<cstdint>
+#include<limits>
+#include<locale>
+#include<sstream>
 
 namespace jotjson{
+
+    namespace{
+
+        // 整数访问器必须精确处理 INT64_MIN。
+        // 这里不用 strtoll 的宽松前缀规则，而是逐位累加并检查边界。
+        bool parse_int64_lexeme(const std::string& text,std::int64_t& output){
+          if(text.empty()){
+            return false;
+          }
+
+          std::size_t index = 0;
+          const bool negative = text[0] == '-';
+          if(negative){
+            index++;
+          }
+
+          if(index == text.size()){
+            return false;
+          }
+
+          const std::uint64_t positive_limit =
+          static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
+
+          // 负数多表示一位
+          const std::uint64_t limit =
+          negative ? positive_limit + static_cast<std::uint64_t>(1) : positive_limit;
+
+          std::uint64_t magnitude = 0;
+
+          for(;index < text.size();index++){
+            const char current  = text[index];
+            if(current < '0' || current > '9'){
+                return false;
+            }
+
+            const std::uint64_t digit = static_cast<std::uint64_t>(current - '0');
+            // 在 multiplication 之前先判断：
+            // magnitude * 10 + digit > limit 是否会发生。
+            if(magnitude > (limit - digit) / static_cast<std::uint64_t>(10)){
+                return false;
+            }
+            magnitude = magnitude*static_cast<std::uint64_t>(10) + digit;
+          }
+
+          if(negative){
+            // 溢出
+            if(magnitude == positive_limit + static_cast<std::uint64_t>(1)){
+                output = std::numeric_limits<std::int64_t>::min();
+            }else{
+                output = -static_cast<std::int64_t>(magnitude);
+            }
+          }else{
+            output = static_cast<std::int64_t>(magnitude);
+          }
+          return true;
+        }
+     // std::locale::classic() 固定使用 C locale 的规则。
+    // 因此进程 locale 即使把小数点设成逗号，JSON 的 1.25 仍按点号解析。
+        double parse_double_lexeme(const std::string& text){
+            std::istringstream input(text);
+            input.imbue(std::locale::classic());
+
+            errno = 0;
+            double parsed = 0.0;
+            input >> std::noskipws >> parsed;
+
+             // eof 确保整个词法片段都被消费，不能只解析前缀。
+            // isfinite 防止把 inf 当成合法数字返回。
+            if(!input || !input.eof() || errno == ERANGE || !std::isfinite(parsed)){
+                throw std::out_of_range("number can not be represented as double");
+            }
+
+            return parsed;
+        }
+    };
 
     value::value(value_type type):type_(type),bool_value_(false){}
 
@@ -59,39 +139,16 @@ namespace jotjson{
 
     std::int64_t value::as_int64() const{
         const std::string& text = number_lexeme();
+        std::int64_t parsed = 0;
 
-        // strtoll 出错时通过 errno 返回 ERANGE。
-        // 每次调用前清零，避免受上一次转换影响。
-        errno = 0;
-
-        char* end = nullptr;
-        const long long parsed = 
-        std::strtoll(text.c_str(),&end,10);
-
-        // 没有解析完
-        if(errno == ERANGE || 
-        end != text.c_str() + text.size()){
-            throw std::out_of_range(
-                "number can not represented as int64"
-            );
+        if(!parse_int64_lexeme(text,parsed)){
+            throw std::out_of_range("number can not be represented as int64");
         }
-
-        return static_cast<std::int64_t>(parsed);
+        return parsed;
     }
 
     double value::as_double() const{
-        const std::string& text = number_lexeme();
-        errno = 0;
-        char* end = nullptr;
-        const double parsed = 
-        std::strtod(
-            text.c_str(),&end);
-        if(errno == ERANGE || end != text.c_str() + text.size()){
-            throw std::out_of_range(
-                "number can not represented as double"
-            );
-        }
-        return parsed;
+        return parse_double_lexeme(number_lexeme());
     }
 
     std::size_t value::size() const{

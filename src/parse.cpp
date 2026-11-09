@@ -5,6 +5,8 @@
 #include<stdexcept>
 #include<string>
 #include<utility>
+#include<cstddef>
+
 
 namespace jotjson{
     namespace {
@@ -138,11 +140,26 @@ namespace jotjson{
 class parser{
 
 public:
-    parser(const char* data,std::size_t size,std::size_t max_depth)
+    parser(const char* data,std::size_t size,std::size_t max_depth,bool allow_utf8_bom)
     :input_(data == nullptr ? "":data,size)
-    ,cursor_(0),line_(1),max_depth_(max_depth),column_(1){}
+    ,cursor_(0),line_(1),column_(1),max_depth_(max_depth),allow_utf8_bom_(allow_utf8_bom){}
 
     document parse_document(){
+
+        if(has_utf8_bom()){
+            if(!allow_utf8_bom_){
+                fail_at(error_code::parse,
+                    error_location(0,1,1),
+                    "UTF-8 BOM is not allowed");
+            }
+
+            advance();
+            advance();
+            advance();
+
+            // bom 消耗固定三个字节
+        }
+
          // JSON 顶层允许任意类型，因此这里不要求一定是对象。
          skip_space();
 
@@ -164,12 +181,19 @@ private:
     std::string input_;
     std::size_t cursor_;
     std::size_t line_;
-    std::size_t max_depth_;
     std::size_t column_;
+    std::size_t max_depth_;
+    bool allow_utf8_bom_;
 
     bool at_end() const{ return cursor_ >= input_.size();}
 
     char peek() const{ return input_[cursor_];}
+
+    bool has_utf8_bom() const{
+        return input_.size() >= 3 && static_cast<unsigned char>(input_[0]) == 0xEF &&
+        static_cast<unsigned char>(input_[1]) == 0xBB &&
+        static_cast<unsigned char>(input_[2]) == 0xBF;
+    }
 
     error_location location() const{
         return error_location(cursor_,line_,column_);
@@ -194,7 +218,8 @@ private:
         if(consumed == '\n'){
             ++line_;
             column_ = 1;
-        }else{
+        }else if(
+            (static_cast<unsigned char>(consumed) & 0xC0) != 0x80){
             ++ column_;
         }
     }
@@ -495,7 +520,7 @@ private:
                 std::uint32_t code_point = 0;
 
                 if(!decode_utf8(input_,cursor_,length,code_point)){
-                    fail(error_code::invalid_utf8,"invlid utf-8 sequence");
+                    fail(error_code::invalid_utf8,"invalid UTF-8 sequence");
                 }
                 result.append(input_,cursor_,length);
 
@@ -619,7 +644,7 @@ document parse_copy(const char* data,std::size_t size,const parse_options& optio
         throw std::invalid_argument("max_depth must be greater than zero");
     }
 
-    parser instance(data,size,options.max_depth);
+    parser instance(data,size,options.max_depth,options.allow_utf8_bom);
 
     return instance.parse_document();
 }
