@@ -26,6 +26,32 @@ option(JOTJSON_BUILD_TESTS "Build JotJSON tests" ON)
 option(JOTJSON_BUILD_EXAMPLES "Build JotJSON examples" ON)
 option(JOTJSON_BUILD_CLI "Build the JotJSON command-line tool" ON)
 
+# [阶段 5 新增]
+option(
+    JOTJSON_BUILD_BENCHMARKS
+    "Build JotJSON benchmarks"
+    OFF
+)
+
+option(
+    JOTJSON_BUILD_FUZZER
+    "Build the JotJSON fuzz harness"
+    OFF
+)
+
+# [阶段 5 新增]
+option(
+    JOTJSON_USE_LIBFUZZER
+    "Compile the fuzz target for a libFuzzer runtime"
+    OFF
+)
+
+option(
+    JOTJSON_ENABLE_SANITIZERS
+    "Enable AddressSanitizer and UndefinedBehaviorSanitizer"
+    OFF
+)
+
 set(JOTJSON_WARNING_OPTIONS
     $<$<CXX_COMPILER_ID:MSVC>:/W4;/permissive->
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion>
@@ -51,6 +77,37 @@ target_include_directories(jotjson
 
 target_compile_features(jotjson PUBLIC cxx_std_11)
 target_compile_options(jotjson PRIVATE ${JOTJSON_WARNING_OPTIONS})
+
+# [阶段 5 新增]
+# Sanitizer 只挂在项目目标上，不污染调用方。
+if(JOTJSON_ENABLE_SANITIZERS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        set(JOTJSON_SANITIZER_COMPILE_FLAGS
+            -fsanitize=address,undefined
+            -fno-omit-frame-pointer
+        )
+
+        set(JOTJSON_SANITIZER_LINK_FLAGS
+            -fsanitize=address,undefined
+        )
+
+        target_compile_options(
+            jotjson
+            PRIVATE
+                ${JOTJSON_SANITIZER_COMPILE_FLAGS}
+        )
+
+        target_link_options(
+            jotjson
+            PRIVATE
+                ${JOTJSON_SANITIZER_LINK_FLAGS}
+        )
+    else()
+        message(WARNING
+            "JOTJSON_ENABLE_SANITIZERS was requested, "
+            "but this compiler is not GCC or Clang")
+    endif()
+endif()
 
 if(JOTJSON_BUILD_TESTS)
     enable_testing()
@@ -85,4 +142,135 @@ if(JOTJSON_BUILD_CLI)
     )
     target_link_libraries(jotjson_cli PRIVATE JotJSON::jotjson)
     target_compile_options(jotjson_cli PRIVATE ${JOTJSON_WARNING_OPTIONS})
+endif()
+
+# [阶段 5 新增]
+if(JOTJSON_BUILD_BENCHMARKS)
+    add_executable(
+        jotjson_bench_parse
+        benchmarks/bench_parse.cpp
+    )
+
+    add_executable(
+        jotjson_bench_serialize
+        benchmarks/bench_serialize.cpp
+    )
+
+    target_link_libraries(
+        jotjson_bench_parse
+        PRIVATE
+            JotJSON::jotjson
+    )
+
+    target_link_libraries(
+        jotjson_bench_serialize
+        PRIVATE
+            JotJSON::jotjson
+    )
+
+    target_compile_options(
+        jotjson_bench_parse
+        PRIVATE
+            ${JOTJSON_WARNING_OPTIONS}
+    )
+
+    target_compile_options(
+        jotjson_bench_serialize
+        PRIVATE
+            ${JOTJSON_WARNING_OPTIONS}
+    )
+
+    if(JOTJSON_ENABLE_SANITIZERS AND
+       CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(
+            jotjson_bench_parse
+            PRIVATE
+                ${JOTJSON_SANITIZER_COMPILE_FLAGS}
+        )
+
+        target_compile_options(
+            jotjson_bench_serialize
+            PRIVATE
+                ${JOTJSON_SANITIZER_COMPILE_FLAGS}
+        )
+
+        target_link_options(
+            jotjson_bench_parse
+            PRIVATE
+                ${JOTJSON_SANITIZER_LINK_FLAGS}
+        )
+
+        target_link_options(
+            jotjson_bench_serialize
+            PRIVATE
+                ${JOTJSON_SANITIZER_LINK_FLAGS}
+        )
+    endif()
+endif()
+
+# [阶段 5 新增]
+if(JOTJSON_BUILD_FUZZER)
+    add_executable(
+        jotjson_fuzz_parse
+        fuzz/fuzz_parse.cpp
+    )
+
+    target_link_libraries(
+        jotjson_fuzz_parse
+        PRIVATE
+            JotJSON::jotjson
+    )
+
+    target_compile_options(
+        jotjson_fuzz_parse
+        PRIVATE
+            ${JOTJSON_WARNING_OPTIONS}
+    )
+
+    set_target_properties(
+        jotjson_fuzz_parse
+        PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY
+                "${PROJECT_BINARY_DIR}/bin"
+    )
+
+    if(JOTJSON_ENABLE_SANITIZERS AND
+       CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(
+            jotjson_fuzz_parse
+            PRIVATE
+                ${JOTJSON_SANITIZER_COMPILE_FLAGS}
+        )
+
+        target_link_options(
+            jotjson_fuzz_parse
+            PRIVATE
+                ${JOTJSON_SANITIZER_LINK_FLAGS}
+        )
+    endif()
+
+    if(JOTJSON_USE_LIBFUZZER AND
+       CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_definitions(
+            jotjson_fuzz_parse
+            PRIVATE
+                JOTJSON_USE_LIBFUZZER=1
+        )
+
+        target_compile_options(
+            jotjson_fuzz_parse
+            PRIVATE
+                -fsanitize=fuzzer
+        )
+
+        target_link_options(
+            jotjson_fuzz_parse
+            PRIVATE
+                -fsanitize=fuzzer
+        )
+    elseif(JOTJSON_USE_LIBFUZZER)
+        message(WARNING
+            "JOTJSON_USE_LIBFUZZER was requested, "
+            "but this compiler is not Clang")
+    endif()
 endif()

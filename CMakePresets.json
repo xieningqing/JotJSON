@@ -31,6 +31,57 @@
           "JOTJSON_BUILD_EXAMPLES": "ON",
           "JOTJSON_BUILD_CLI": "ON"
         }
+      },
+      {
+        "name": "bench",
+        "displayName": "Benchmark",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/build/bench",
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+          "JOTJSON_BUILD_TESTS": "OFF",
+          "JOTJSON_BUILD_EXAMPLES": "OFF",
+          "JOTJSON_BUILD_CLI": "OFF",
+          "JOTJSON_BUILD_BENCHMARKS": "ON"
+        }
+      },
+      {
+        "name": "bench-native",
+        "displayName": "Benchmark (native instructions)",
+        "inherits": "bench",
+        "binaryDir": "${sourceDir}/build/bench-native",
+        "cacheVariables": {
+          "CMAKE_CXX_FLAGS": "-march=native"
+        }
+      },
+      {
+        "name": "asan",
+        "displayName": "ASan + UBSan",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/build/asan",
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+          "JOTJSON_BUILD_TESTS": "ON",
+          "JOTJSON_BUILD_EXAMPLES": "OFF",
+          "JOTJSON_BUILD_CLI": "OFF",
+          "JOTJSON_ENABLE_SANITIZERS": "ON"
+        }
+      },
+      {
+        "name": "fuzz",
+        "displayName": "Fuzz harness",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/build/fuzz",
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+          "JOTJSON_BUILD_TESTS": "OFF",
+          "JOTJSON_BUILD_EXAMPLES": "OFF",
+          "JOTJSON_BUILD_CLI": "OFF",
+          "JOTJSON_BUILD_FUZZER": "ON"
+        }
       }
     ],
     "buildPresets": [
@@ -41,6 +92,22 @@
       {
         "name": "release",
         "configurePreset": "release"
+      },
+      {
+        "name": "bench",
+        "configurePreset": "bench"
+      },
+      {
+        "name": "bench-native",
+        "configurePreset": "bench-native"
+      },
+      {
+        "name": "asan",
+        "configurePreset": "asan"
+      },
+      {
+        "name": "fuzz",
+        "configurePreset": "fuzz"
       }
     ],
     "testPresets": [
@@ -54,6 +121,13 @@
       {
         "name": "release",
         "configurePreset": "release",
+        "output": {
+          "outputOnFailure": true
+        }
+      },
+      {
+        "name": "asan",
+        "configurePreset": "asan",
         "output": {
           "outputOnFailure": true
         }

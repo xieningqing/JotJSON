@@ -1,0 +1,1 @@
+{"message":"line\nquote\"slash\\tab\tunicode:\u4F60\u597D nul:\u0000","plain":"no escapes in this string","items":["a\nb","c\\d","e\"f"]}

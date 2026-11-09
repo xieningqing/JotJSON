@@ -1,0 +1,67 @@
+
+=== configure debug ===
+Preset CMake variables:
+
+  CMAKE_BUILD_TYPE="Debug"
+  CMAKE_EXPORT_COMPILE_COMMANDS="ON"
+  JOTJSON_BUILD_CLI="ON"
+  JOTJSON_BUILD_EXAMPLES="ON"
+  JOTJSON_BUILD_TESTS="ON"
+
+-- Configuring done (0.3s)
+-- Generating done (0.1s)
+-- Build files have been written to: E:/project/cpp/JotJSON/build/debug
+=== build debug ===
+ninja: no work to do.
+=== test debug ===
+Test project E:/project/cpp/JotJSON/build/debug
+    Start 1: jotjson_tests
+1/5 Test #1: jotjson_tests ....................   Passed    0.05 sec
+    Start 2: jotjson_serialize_tests
+2/5 Test #2: jotjson_serialize_tests ..........   Passed    0.05 sec
+    Start 3: jotjson_strict_tests
+3/5 Test #3: jotjson_strict_tests .............   Passed    0.05 sec
+    Start 4: jotjson_baseline_tests
+4/5 Test #4: jotjson_baseline_tests ...........   Passed    0.05 sec
+    Start 5: jotjson_stage5_tests
+5/5 Test #5: jotjson_stage5_tests .............   Passed    0.06 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Label Time Summary:
+baseline      =   0.05 sec*proc (1 test)
+corpus        =   0.06 sec*proc (1 test)
+json          =   0.26 sec*proc (5 tests)
+parser        =   0.05 sec*proc (1 test)
+serializer    =   0.05 sec*proc (1 test)
+stage5        =   0.06 sec*proc (1 test)
+strict        =   0.05 sec*proc (1 test)
+
+Total Test time (real) =   0.27 sec
+=== configure bench ===
+Preset CMake variables:
+
+  CMAKE_BUILD_TYPE="Release"
+  CMAKE_EXPORT_COMPILE_COMMANDS="OFF"
+  JOTJSON_BUILD_BENCHMARKS="ON"
+  JOTJSON_BUILD_CLI="OFF"
+  JOTJSON_BUILD_EXAMPLES="OFF"
+  JOTJSON_BUILD_TESTS="OFF"
+
+-- Configuring done (0.3s)
+-- Generating done (0.1s)
+-- Build files have been written to: E:/project/cpp/JotJSON/build/bench
+=== build bench ===
+ninja: no work to do.
+=== parse benchmark: tests\data\valid\nested.json ===
+BENCH name=parse file=E:\project\cpp\JotJSON\tests\data\valid\nested.json input_bytes=72 total_bytes=1440 iterations=20 total_seconds=3.18e-05 throughput_mb_s=43.1853
+=== serialize benchmark: tests\data\valid\nested.json ===
+BENCH name=serialize file=E:\project\cpp\JotJSON\tests\data\valid\nested.json input_bytes=72 total_bytes=1440 iterations=20 total_seconds=1.44e-05 throughput_mb_s=95.3674
+=== parse benchmark: tests\data\valid\large_object.json ===
+BENCH name=parse file=E:\project\cpp\JotJSON\tests\data\valid\large_object.json input_bytes=366 total_bytes=7320 iterations=20 total_seconds=0.0001573 throughput_mb_s=44.3795
+=== serialize benchmark: tests\data\valid\large_object.json ===
+BENCH name=serialize file=E:\project\cpp\JotJSON\tests\data\valid\large_object.json input_bytes=366 total_bytes=7320 iterations=20 total_seconds=3.62e-05 throughput_mb_s=192.842
+=== parse benchmark: tests\data\baseline_escape_heavy.json ===
+BENCH name=parse file=E:\project\cpp\JotJSON\tests\data\baseline_escape_heavy.json input_bytes=138 total_bytes=2760 iterations=20 total_seconds=5.17e-05 throughput_mb_s=50.9118
+=== serialize benchmark: tests\data\baseline_escape_heavy.json ===
+BENCH name=serialize file=E:\project\cpp\JotJSON\tests\data\baseline_escape_heavy.json input_bytes=138 total_bytes=2760 iterations=20 total_seconds=1.19e-05 throughput_mb_s=221.188
